@@ -1,0 +1,265 @@
+---
+title: 'Project 2: Modeling, Testing, and Predicting'
+author: "Juliette Licon jtl2383 - SDS348"
+date: "05/01/2020"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: yes
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+hook_output = knit_hooks$get('output')
+knit_hooks$set(output = function(x, options) {
+  # this hook is used only when the linewidth option is not NULL
+  if (!is.null(n <- options$linewidth)) {
+    x = knitr:::split_lines(x)
+    # any lines wider than n should be wrapped
+    if (any(nchar(x) > n)) x = strwrap(x, width = n)
+    x = paste(x, collapse = '\n')
+  }
+  hook_output(x, options)
+})
+
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE,fig.align="center",warning=FALSE,message=FALSE,fig.width=8, fig.height=5, linewidth=60)
+options(tibble.width = 100,width = 100)
+library(tidyverse)
+```
+
+# Modeling
+
+- **0. (5 pts)** Introduce your dataset and each of your variables (or just your main variables if you have lots) in a paragraph. What are they measuring? How many observations?
+```{r}
+avo<-read.csv("avocado.csv")
+avo%>%head
+avo%>%count
+```
+*This dataset contains the prices of different avocados around the nation on December 27, 2015. The variables include the average price, the total volume of avocados sold that day, the next 3 variables are the total number of avocados sold with that PLU number (4046, 4225, 4770). 'Type' of avocado is either organic or conventional, and one for the region the avocado price was recorded in. There are 88 observations.*
+
+- **1. (15 pts)** Perform a MANOVA testing whether any of your numeric variables (or a subset of them, if including them all doesn't make sense) show a mean difference across levels of one of your categorical variables (3). If they do, perform univariate ANOVAs to find response(s) showing a mean difference across groups (3), and perform post-hoc t tests to find which groups differ (3). Discuss the number of tests you have performed, calculate the probability of at least one type I error (if unadjusted), and adjust the significance level accordingly (bonferroni correction) before discussing significant differences (3). Briefly discuss assumptions and whether or not they are likely to have been met (2).
+```{r}
+#MANOVA
+man1<-manova(cbind(AveragePrice,Total.Volume,X4046,X4225,X4770)~type, data=avo)
+summary(man1)
+
+#univariate ANOVAs
+summary.aov(man1)
+
+avo%>%group_by(type)%>%summarize(mean(AveragePrice),mean(Total.Volume), mean(X4046), mean(X4225),mean(X4770))
+#10 t tests to be performed
+
+#post-hoc t tests
+pairwise.t.test(avo$AveragePrice,avo$type,p.adj="none")
+pairwise.t.test(avo$Total.Volume,avo$type,p.adj="none")
+pairwise.t.test(avo$X4046,avo$type,p.adj="none")
+pairwise.t.test(avo$X4225,avo$type,p.adj="none")
+pairwise.t.test(avo$X4770,avo$type,p.adj="none")
+
+#Number of tests performed
+1+5+10 #16
+
+#Probability of Type 1 error
+1-0.95^16 #0.5599 => probability that everything would be considered significant
+
+#Bonferroni adjustment
+0.05/(1+5+10) #0.003125 is new alpha
+
+#Assumptions of MANOVA
+#multivariate normality
+ggplot(avo, aes(x = X4225, y = X4046)) + geom_point(alpha = .5) + geom_density_2d(h=2) + coord_fixed() + facet_wrap(~type)
+
+#homogeneity of covariance
+covmats<-avo%>%group_by(type)%>%do(covs=cov(.[1:5]))
+for(i in 1:2){print(as.character(covmats$type[i])); print(covmats$covs[i])}
+```
+*The one way MANOVA revealed that there is mean difference in at least one of our numeric variables across levels of avocado type, with a p value of 2.2e16. The univariate ANOVAs found that there was a mean difference in average price, total volume sold, number of PLU 4046, 4225, and 4770 avocados sold between organic and conventional avocados, as all had a p-value of 2.2e16. The post hoc t tests confirmed that organic and convnetional avocados have a significant mean difference for all the variables tested. 1 MANOVA test, 5 univariate ANOVAs, and 10 post-hoc t tests were performed, giving us 16 tests overall, so the probability of at least one type I error is 0.5599. When we adjust alpha using Bonferroni's correction, we set alpha at 0.003125. Using this alpha, all tests remain significant. From the density plot, we can see that the assumption of multivariate normality is being violated. The covariance of each numeric variable do not appear to be homogeneic across avocado types, violating another assumption. More samples than variables assumption was met. We have no way of knowing if the sample was random however.*
+
+- **2. (10 pts)** Perform some kind of randomization test on your data (that makes sense). This can be anything you want! State null and alternative hypotheses, perform the test, and interpret the results (7). Create a plot visualizing the null distribution and the test statistic (3).
+```{r}
+#Ho: The mean total volume sold is the same for conventional and organic avocados
+#Ha: The mean total volume sold is different for conventional and organic avocados
+
+#original
+avo%>%group_by(type)%>%summarize(means=mean(Total.Volume))%>%summarize(`mean_diff:`=diff(means)) #-451319.2
+
+
+#permutations & randomization test
+rand_dist<-vector()
+
+for(i in 1:5000){
+new<-data.frame(volume=sample(avo$Total.Volume),type=avo$type) 
+rand_dist[i]<-mean(new[new$type=="organic",]$volume)-mean(new[new$type=="conventional",]$volume)
+  }
+
+mean(rand_dist>451319.2 | rand_dist< -451319.2) #0
+
+#plot visualizing null distribution and test statistic
+{hist(rand_dist,main="",ylab="",xlim=c(-500000,500000)); abline(v =-451319.2 ,col="red")}
+
+t.test(data=avo,Total.Volume~type)
+```
+*As it is hard to meet all assumptions of hypothesis tests, we now use a randomization test to determine whether there is actually a difference in mean total volume of avocados sold between organic and conventional. Our null hypothesis is that the mean total volume sold is the same between the two avocado types, and our alternative is that there is a difference in the mean total volumes sold between the two avocado types. The mean volume difference in our sample data was 451,319.2, and using our randomization test, we find that there is a neglible chance that this was due to chance, meaning we can reject the null hypothesis that there is no significant difference in the mean total volume sold between two avocado types. Avocado type does affect how many avocados are sold.*
+
+- **3. (35 pts)** Build a linear regression model predicting one of your response variables from at least 2 other variables, including their interaction. Mean-center any numeric variables involved in the interaction.
+
+    - Interpret the coefficient estimates (do not discuss significance) (10)
+    - Plot the regression using `ggplot()`. If your interaction is numeric by numeric, refer to code near the end of WS15 to make the plot. If you have 3 or more predictors, just chose two to plot for convenience. (8)
+    - Check assumptions of linearity, normality, and homoskedasticity either graphically or using a hypothesis test (4)
+    - Regardless, recompute regression results with robust standard errors via `coeftest(..., vcov=vcovHC(...))`. Discuss significance of results, including any changes from before/after robust SEs if applicable. (8)
+    - What proportion of the variation in the outcome does your model explain? (4)
+```{r}
+avo1<-avo%>%mutate(total_c=avo$Total.Volume-mean(avo$Total.Volume))
+fit<-lm(AveragePrice~type*total_c, data=avo1)
+#interpret coefficients
+summary(fit)
+
+#plot regression
+avo1%>%ggplot(aes(x=total_c, y=AveragePrice,group=type), ylim=c(-3,3))+geom_point(aes(color=type))+
+  geom_smooth(method="lm",se=F,aes(color=type))
+
+#check assumptions
+avo1%>%ggplot(aes(type, AveragePrice))+geom_point()
+avo1%>%ggplot(aes(total_c, AveragePrice))+geom_point()
+library(lmtest)
+library(sandwich)
+bptest(fit)
+resids<-fit$residuals
+ks.test(resids, "pnorm", sd=sd(resids))
+
+#robust standard errors
+coeftest(fit, vcov=vcovHC(fit))
+```
+*The predicted average price for an conventional avocado sold in an average total volume is $1.05. For an organic avocado, when an average total volume of avocados is sold, the average price is 0.43 cents less than for conventional. Controlling for avocado type, for every additional avocado sold, there is a 0.0000001 cent decrease in average price. For the interaction variables of type and total volume, the coefficient should be interpreted as the slope for total volume on average price is .000004 cents less for organic compared to conventional avocados. Howevere, none of these variables or interactions were significant. By the scatterplots, we can see that the assumptions of linearity is lost. The lack of significance of the BP test has us accept the null hypothesis of homoscedasticity. The lack of significance of the KS test tells us that the assumption of normality is met. None of the regions or regions interacting with total avocado volume changed significance status when robust standard errors were used.  Our model explains 65.89% of the variation in the outcome.*
+
+- **4. (5 pts)** Rerun same regression model (with interaction), but this time compute bootstrapped standard errors. Discuss any changes you observe in SEs and p-values using these SEs compared to the original SEs and the robust SEs)
+```{r}
+samp_distn<-replicate(5000, {
+boot_dat <- sample_frac(avo1, replace=T) 
+fitter<-lm(AveragePrice~type*total_c, data=boot_dat) 
+coef(fitter) })
+
+boot_dat <- sample_frac(avo1, replace=T) 
+fitter<-lm(AveragePrice~type*total_c, data=boot_dat)
+coeftest(fitter)
+```
+*The bootstrap standard error for is larger than the original SE, but smaller than the robust SE, but the p values for all the variables, including the interaction became even less significant than when using the robust and original SE (these were also insignificant).  *
+
+- **5. (40 pts)** Perform a logistic regression predicting a binary categorical variable (if you don't have one, make/get one) from at least two explanatory variables (interaction not necessary). 
+
+    - Interpret coefficient estimates in context (10)
+    - Report a confusion matrix for your logistic regression (2)
+    - Compute and discuss the Accuracy, Sensitivity (TPR), Specificity (TNR), and Recall (PPV) of your model (5)
+    - Using ggplot, plot density of log-odds (logit) by your binary outcome variable (3)
+    - Generate an ROC curve (plot) and calculate AUC (either manually or with a package); interpret (10)
+    - Perform 10-fold (or repeated random sub-sampling) CV and report average out-of-sample Accuracy, Sensitivity, and Recall (10)
+```{r}
+avo1$price_c<-avo1$AveragePrice-mean(avo1$AveragePrice)
+avo1$`4046_c`<-avo1$X4046-mean(avo1$X4046)
+fit2<-glm(type~price_c+`4046_c`, data = avo1, family = "binomial")
+#interpret coefficients
+coeftest(fit2)
+exp(coef(fit2))
+
+#confusion matrix
+avo1$prob<-predict(fit2,type="response")
+pred<-ifelse(avo1$prob>.5,1,0)
+table(prediction=pred, truth=avo1$type)%>%addmargins
+
+class_diag <- function(probs,truth){
+tab<-table(factor(probs>.5,levels=c("FALSE","TRUE")),truth)
+acc=sum(diag(tab))/sum(tab)
+sens=tab[2,2]/colSums(tab)[2]
+spec=tab[1,1]/colSums(tab)[1]
+ppv=tab[2,2]/rowSums(tab)[2]
+if(is.numeric(truth)==FALSE & is.logical(truth)==FALSE) truth<-as.numeric(truth)-1
+ord<-order(probs, decreasing=TRUE)
+probs <- probs[ord]; truth <- truth[ord]
+TPR=cumsum(truth)/max(1,sum(truth))
+FPR=cumsum(!truth)/max(1,sum(!truth))
+dup<-c(probs[-1]>=probs[-length(probs)], FALSE)
+TPR<-c(0,TPR[!dup],1); FPR<-c(0,FPR[!dup],1)
+n <- length(TPR)
+auc<- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+data.frame(acc,sens,spec,ppv,auc)
+}
+
+class_diag(avo1$prob,avo1$type)
+
+
+#density plot of log odds
+avo1$logit<-predict(fit2, type = "link")
+avo1%>%ggplot()+geom_density(aes(logit,color=type,fill=type), alpha=.4)+
+  theme(legend.position=c(.85,.85))+geom_vline(xintercept=0)+xlab("logit (log-odds)")+
+  geom_rug(aes(logit,color=type))+
+  geom_text(x=-5,y=.07,label="TN = 39")+
+  geom_text(x=-10,y=.008,label="FN = 3")+
+  geom_text(x=1,y=.006,label="FP = 5")+
+  geom_text(x=5,y=.04,label="TP = 41")
+
+#ROC Plot
+library(plotROC)
+ROCplot<-ggplot(avo1)+geom_roc(aes(d=type,m=prob), n.cuts=0)
+ROCplot
+calc_auc(ROCplot)
+
+
+#CV
+set.seed(1234)
+k=10 
+data<-avo1[sample(nrow(avo1)),] 
+folds<-cut(seq(1:nrow(avo1)),breaks=k,labels=F)
+diags<-NULL
+for(i in 1:k){
+train<-data[folds!=i,]
+test<-data[folds==i,]
+truth<-test$type
+fit<-glm(type~price_c+`4046_c`,data=train,family="binomial")
+probs<-predict(fit,newdata = test,type="response")
+diags<-rbind(diags,class_diag(probs,truth))
+}
+summarize_all(diags,mean)
+```
+*The odds of the avocados being organic for an average price and an average amount of PLU4046 avodacados sold is -9.06. Controlling for number of PLU4046 avocados sold, for every one additional dollar in average price, odds of organic increase by a factor of 8.17, significant. Controlling for price, for every additional PLU4046 avocado sold, odds of organic decrease by a factor of 0.0001, not significant. 39 conventional predicted avocados were actually conventional. 3 predicted conventional avocados were actually organic. 5 predicted organic avocados were actually conventional, and 41 predicted organic avocados were actually organic. The accuracy is 90.91%, the sensitivity is 93.18%, the specificity is 88.63%, and the precision is 89.13%. The AUC is 0.9783 which is great, meaning that price and the number of PLU4046 avocados sold are reliable predictors of avocado type. Using 10-fold CV, the average out of sample Accuracy is 90.83%, the sensitivity is 94.90%, and the ppv is 89.67%. The new AUC is 0.9764, only .0019 less than the sample AUC. This means out model is not overfit to the sample data and avocado price and number of PLU4046 avocados sold are still reliable predictors of avocado type. *
+
+- **6. (10 pts)** Choose one variable you want to predict (can be one you used from before; either binary or continuous) and run a LASSO regression inputting all the rest of your variables as predictors. Choose lambda to give the simplest model whose accuracy is near that of the best (i.e., `lambda.1se`). Discuss which variables are retained. Perform 10-fold CV using this model: if response in binary, compare model's out-of-sample accuracy to that of your logistic regression in part 5; if response is numeric, compare the residual standard error (at the bottom of the summary output, aka RMSE): lower is better fit!
+```{r}
+library(glmnet)
+
+y<-as.matrix(avo$type)
+x<-model.matrix(type~.,data=avo)[,-1]
+x<-scale(x)
+cv <- cv.glmnet(x,y,family = "binomial") 
+lasso<-glmnet(x,y,family="binomial",lambda=cv$lambda.1se)
+coef(lasso)
+
+#CV
+set.seed(1234)
+k=10 
+
+data1<-avo[sample(nrow(avo)),] 
+folds<-cut(seq(1:nrow(avo)),breaks=k,labels=F)
+diags<-NULL
+for(i in 1:k){
+
+train<-data1[folds!=i,]
+test<-data1[folds==i,]
+truth<-test$type
+fit<-glm(type~AveragePrice,data=train,family="binomial")
+probs<-predict(fit,newdata = test,type="response")
+diags<-rbind(diags,class_diag(probs,truth))
+}
+diags%>%summarize_all(mean)
+
+```
+*The LASSO model showed us that Average Price is the only variable that is needed to accurately predict avocado type. When using this variable only, the accuracy is 90.83%, the sensitivity is 92.41%, the specificity is 90.74%, the precision is 90.5%. The AUC is 96.42%. The accuracy is the exact same as when using the model from 5, but the AUC has reduced slightly, meaning this model is slightly more fit to the sample data, despite it still being a great and reliable predictor of avocado type. *
+...
+
+
+
+
+

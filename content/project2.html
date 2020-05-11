@@ -1,0 +1,516 @@
+---
+title: 'Project 2: Modeling, Testing, and Predicting'
+author: "Juliette Licon jtl2383 - SDS348"
+date: "05/01/2020"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: yes
+---
+
+
+
+<div id="modeling" class="section level1">
+<h1>Modeling</h1>
+<ul>
+<li><strong>0. (5 pts)</strong> Introduce your dataset and each of your variables (or just your main variables if you have lots) in a paragraph. What are they measuring? How many observations?</li>
+</ul>
+<pre class="r"><code>avo&lt;-read.csv(&quot;avocado.csv&quot;)
+avo%&gt;%head</code></pre>
+<pre><code>## AveragePrice Total.Volume X4046 X4225 X4770 type region
+## 1 1.33 64236.62 1036.74 54454.85 48.16 conventional
+Albany
+## 2 0.99 386100.49 292097.36 27350.92 297.90 conventional
+Atlanta
+## 3 1.17 596819.40 40450.49 394104.02 17353.79
+conventional BaltimoreWashington
+## 4 0.97 62909.69 30482.25 2971.94 5894.40 conventional
+Boise
+## 5 1.13 450816.39 3886.27 346964.70 13952.56 conventional
+Boston
+## 6 1.35 96233.08 1367.81 39542.83 85.76 conventional
+BuffaloRochester</code></pre>
+<pre class="r"><code>avo%&gt;%count</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##       n
+##   &lt;int&gt;
+## 1    88</code></pre>
+<p><em>This dataset contains the prices of different avocados around the nation on December 27, 2015. The variables include the average price, the total volume of avocados sold that day, the next 3 variables are the total number of avocados sold with that PLU number (4046, 4225, 4770). ‘Type’ of avocado is either organic or conventional, and one for the region the avocado price was recorded in. There are 88 observations.</em></p>
+<ul>
+<li><strong>1. (15 pts)</strong> Perform a MANOVA testing whether any of your numeric variables (or a subset of them, if including them all doesn’t make sense) show a mean difference across levels of one of your categorical variables (3). If they do, perform univariate ANOVAs to find response(s) showing a mean difference across groups (3), and perform post-hoc t tests to find which groups differ (3). Discuss the number of tests you have performed, calculate the probability of at least one type I error (if unadjusted), and adjust the significance level accordingly (bonferroni correction) before discussing significant differences (3). Briefly discuss assumptions and whether or not they are likely to have been met (2).</li>
+</ul>
+<pre class="r"><code>#MANOVA
+man1&lt;-manova(cbind(AveragePrice,Total.Volume,X4046,X4225,X4770)~type, data=avo)
+summary(man1)</code></pre>
+<pre><code>## Df Pillai approx F num Df den Df Pr(&gt;F)
+## type 1 0.68139 35.074 5 82 &lt; 2.2e-16 ***
+## Residuals 86
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>#univariate ANOVAs
+summary.aov(man1)</code></pre>
+<pre><code>## Response AveragePrice :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## type 1 6.7322 6.7322 155.86 &lt; 2.2e-16 ***
+## Residuals 86 3.7146 0.0432
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response Total.Volume :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## type 1 4.4812e+12 4.4812e+12 29.999 4.226e-07 ***
+## Residuals 86 1.2847e+13 1.4938e+11
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response X4046 :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## type 1 4.4204e+11 4.4204e+11 19.679 2.698e-05 ***
+## Residuals 86 1.9318e+12 2.2463e+10
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response X4225 :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## type 1 7.1938e+11 7.1938e+11 21.611 1.196e-05 ***
+## Residuals 86 2.8627e+12 3.3288e+10
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response X4770 :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## type 1 1.0840e+10 1.0840e+10 10.571 0.001641 **
+## Residuals 86 8.8186e+10 1.0254e+09
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>avo%&gt;%group_by(type)%&gt;%summarize(mean(AveragePrice),mean(Total.Volume), mean(X4046), mean(X4225),mean(X4770))</code></pre>
+<pre><code>## # A tibble: 2 x 6
+## type `mean(AveragePrice)` `mean(Total.Volume)`
+`mean(X4046)` `mean(X4225)` `mean(X4770)`
+## &lt;fct&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 conventional 1.03 461415.  143236.  185183.  22307.
+## 2 organic 1.58 10096.  1487.  4354.  109.</code></pre>
+<pre class="r"><code>#10 t tests to be performed
+
+#post-hoc t tests
+pairwise.t.test(avo$AveragePrice,avo$type,p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  avo$AveragePrice and avo$type 
+## 
+##         conventional
+## organic &lt;2e-16      
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(avo$Total.Volume,avo$type,p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  avo$Total.Volume and avo$type 
+## 
+##         conventional
+## organic 4.2e-07     
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(avo$X4046,avo$type,p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  avo$X4046 and avo$type 
+## 
+##         conventional
+## organic 2.7e-05     
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(avo$X4225,avo$type,p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  avo$X4225 and avo$type 
+## 
+##         conventional
+## organic 1.2e-05     
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(avo$X4770,avo$type,p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  avo$X4770 and avo$type 
+## 
+##         conventional
+## organic 0.0016      
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>#Number of tests performed
+1+5+10 #16</code></pre>
+<pre><code>## [1] 16</code></pre>
+<pre class="r"><code>#Probability of Type 1 error
+1-0.95^16 #0.5599 =&gt; probability that everything would be considered significant</code></pre>
+<pre><code>## [1] 0.5598733</code></pre>
+<pre class="r"><code>#Bonferroni adjustment
+0.05/(1+5+10) #0.003125 is new alpha</code></pre>
+<pre><code>## [1] 0.003125</code></pre>
+<pre class="r"><code>#Assumptions of MANOVA
+#multivariate normality
+ggplot(avo, aes(x = X4225, y = X4046)) + geom_point(alpha = .5) + geom_density_2d(h=2) + coord_fixed() + facet_wrap(~type)</code></pre>
+<p><img src="/project2_files/figure-html/unnamed-chunk-2-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>#homogeneity of covariance
+covmats&lt;-avo%&gt;%group_by(type)%&gt;%do(covs=cov(.[1:5]))
+for(i in 1:2){print(as.character(covmats$type[i])); print(covmats$covs[i])}</code></pre>
+<pre><code>## [1] &quot;conventional&quot;
+## [[1]]
+## AveragePrice Total.Volume X4046 X4225 X4770
+## AveragePrice 2.681543e-02 -3.059195e+04 -2.062237e+04
+-2.551496e+03 -2.017092e+03
+## Total.Volume -3.059195e+04 2.985770e+11 8.761178e+10
+1.185597e+11 1.896172e+10
+## X4046 -2.062237e+04 8.761178e+10 4.492071e+10
+1.730565e+10 3.958041e+09
+## X4225 -2.551496e+03 1.185597e+11 1.730565e+10
+6.651648e+10 8.701969e+09
+## X4770 -2.017092e+03 1.896172e+10 3.958041e+09
+8.701969e+09 2.050720e+09
+##
+## [1] &quot;organic&quot;
+## [[1]]
+## AveragePrice Total.Volume X4046 X4225 X4770
+## AveragePrice 0.05957125 -7.654915e+02 -137.1311
+-121.5769 1.645237e+01
+## Total.Volume -765.49154588 1.802352e+08 21336027.8415
+91068799.3439 1.031364e+06
+## X4046 -137.13108710 2.133603e+07 5349521.6004
+7209204.7407 2.979316e+04
+## X4225 -121.57694080 9.106880e+07 7209204.7407
+58772353.4372 3.405391e+05
+## X4770 16.45237167 1.031364e+06 29793.1581 340539.0664
+1.122898e+05</code></pre>
+<p><em>The one way MANOVA revealed that there is mean difference in at least one of our numeric variables across levels of avocado type, with a p value of 2.2e16. The univariate ANOVAs found that there was a mean difference in average price, total volume sold, number of PLU 4046, 4225, and 4770 avocados sold between organic and conventional avocados, as all had a p-value of 2.2e16. The post hoc t tests confirmed that organic and convnetional avocados have a significant mean difference for all the variables tested. 1 MANOVA test, 5 univariate ANOVAs, and 10 post-hoc t tests were performed, giving us 16 tests overall, so the probability of at least one type I error is 0.5599. When we adjust alpha using Bonferroni’s correction, we set alpha at 0.003125. Using this alpha, all tests remain significant. From the density plot, we can see that the assumption of multivariate normality is being violated. The covariance of each numeric variable do not appear to be homogeneic across avocado types, violating another assumption. More samples than variables assumption was met. We have no way of knowing if the sample was random however.</em></p>
+<ul>
+<li><strong>2. (10 pts)</strong> Perform some kind of randomization test on your data (that makes sense). This can be anything you want! State null and alternative hypotheses, perform the test, and interpret the results (7). Create a plot visualizing the null distribution and the test statistic (3).</li>
+</ul>
+<pre class="r"><code>#Ho: The mean total volume sold is the same for conventional and organic avocados
+#Ha: The mean total volume sold is different for conventional and organic avocados
+
+#original
+avo%&gt;%group_by(type)%&gt;%summarize(means=mean(Total.Volume))%&gt;%summarize(`mean_diff:`=diff(means)) #-451319.2</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   `mean_diff:`
+##          &lt;dbl&gt;
+## 1     -451319.</code></pre>
+<pre class="r"><code>#permutations &amp; randomization test
+rand_dist&lt;-vector()
+
+for(i in 1:5000){
+new&lt;-data.frame(volume=sample(avo$Total.Volume),type=avo$type) 
+rand_dist[i]&lt;-mean(new[new$type==&quot;organic&quot;,]$volume)-mean(new[new$type==&quot;conventional&quot;,]$volume)
+  }
+
+mean(rand_dist&gt;451319.2 | rand_dist&lt; -451319.2) #0</code></pre>
+<pre><code>## [1] 0</code></pre>
+<pre class="r"><code>#plot visualizing null distribution and test statistic
+{hist(rand_dist,main=&quot;&quot;,ylab=&quot;&quot;,xlim=c(-500000,500000)); abline(v =-451319.2 ,col=&quot;red&quot;)}</code></pre>
+<p><img src="/project2_files/figure-html/unnamed-chunk-3-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>t.test(data=avo,Total.Volume~type)</code></pre>
+<pre><code>##
+## Welch Two Sample t-test
+##
+## data: Total.Volume by type
+## t = 5.4771, df = 43.052, p-value = 2.088e-06
+## alternative hypothesis: true difference in means is not
+equal to 0
+## 95 percent confidence interval:
+## 285147.3 617491.0
+## sample estimates:
+## mean in group conventional mean in group organic
+## 461414.87 10095.71</code></pre>
+<p><em>As it is hard to meet all assumptions of hypothesis tests, we now use a randomization test to determine whether there is actually a difference in mean total volume of avocados sold between organic and conventional. Our null hypothesis is that the mean total volume sold is the same between the two avocado types, and our alternative is that there is a difference in the mean total volumes sold between the two avocado types. The mean volume difference in our sample data was 451,319.2, and using our randomization test, we find that there is a neglible chance that this was due to chance, meaning we can reject the null hypothesis that there is no significant difference in the mean total volume sold between two avocado types. Avocado type does affect how many avocados are sold.</em></p>
+<ul>
+<li><p><strong>3. (35 pts)</strong> Build a linear regression model predicting one of your response variables from at least 2 other variables, including their interaction. Mean-center any numeric variables involved in the interaction.</p>
+<ul>
+<li>Interpret the coefficient estimates (do not discuss significance) (10)</li>
+<li>Plot the regression using <code>ggplot()</code>. If your interaction is numeric by numeric, refer to code near the end of WS15 to make the plot. If you have 3 or more predictors, just chose two to plot for convenience. (8)</li>
+<li>Check assumptions of linearity, normality, and homoskedasticity either graphically or using a hypothesis test (4)</li>
+<li>Regardless, recompute regression results with robust standard errors via <code>coeftest(..., vcov=vcovHC(...))</code>. Discuss significance of results, including any changes from before/after robust SEs if applicable. (8)</li>
+<li>What proportion of the variation in the outcome does your model explain? (4)</li>
+</ul></li>
+</ul>
+<pre class="r"><code>avo1&lt;-avo%&gt;%mutate(total_c=avo$Total.Volume-mean(avo$Total.Volume))
+fit&lt;-lm(AveragePrice~type*total_c, data=avo1)
+#interpret coefficients
+summary(fit)</code></pre>
+<pre><code>##
+## Call:
+## lm(formula = AveragePrice ~ type * total_c, data = avo1)
+##
+## Residuals:
+## Min 1Q Median 3Q Max
+## -0.70232 -0.09798 -0.02710 0.12167 0.72150
+##
+## Coefficients:
+## Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) 1.049e+00 3.306e-02 31.728 &lt;2e-16 ***
+## typeorganic -4.284e-01 5.207e-01 -0.823 0.4130
+## total_c -1.025e-07 5.648e-08 -1.814 0.0732 .
+## typeorganic:total_c -4.145e-06 2.299e-06 -1.803 0.0751 .
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Residual standard error: 0.2024 on 84 degrees of freedom
+## Multiple R-squared: 0.6707, Adjusted R-squared: 0.6589
+## F-statistic: 57.03 on 3 and 84 DF, p-value: &lt; 2.2e-16</code></pre>
+<pre class="r"><code>#plot regression
+avo1%&gt;%ggplot(aes(x=total_c, y=AveragePrice,group=type), ylim=c(-3,3))+geom_point(aes(color=type))+
+  geom_smooth(method=&quot;lm&quot;,se=F,aes(color=type))</code></pre>
+<p><img src="/project2_files/figure-html/unnamed-chunk-4-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>#check assumptions
+avo1%&gt;%ggplot(aes(type, AveragePrice))+geom_point()</code></pre>
+<p><img src="/project2_files/figure-html/unnamed-chunk-4-2.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>avo1%&gt;%ggplot(aes(total_c, AveragePrice))+geom_point()</code></pre>
+<p><img src="/project2_files/figure-html/unnamed-chunk-4-3.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>library(lmtest)
+library(sandwich)
+bptest(fit)</code></pre>
+<pre><code>## 
+##  studentized Breusch-Pagan test
+## 
+## data:  fit
+## BP = 3.8074, df = 3, p-value = 0.283</code></pre>
+<pre class="r"><code>resids&lt;-fit$residuals
+ks.test(resids, &quot;pnorm&quot;, sd=sd(resids))</code></pre>
+<pre><code>## 
+##  One-sample Kolmogorov-Smirnov test
+## 
+## data:  resids
+## D = 0.10087, p-value = 0.311
+## alternative hypothesis: two-sided</code></pre>
+<pre class="r"><code>#robust standard errors
+coeftest(fit, vcov=vcovHC(fit))</code></pre>
+<pre><code>##
+## t test of coefficients:
+##
+## Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) 1.0490e+00 2.4078e-02 43.5682 &lt;2e-16 ***
+## typeorganic -4.2836e-01 6.3749e-01 -0.6719 0.5035
+## total_c -1.0246e-07 6.5725e-08 -1.5589 0.1228
+## typeorganic:total_c -4.1447e-06 2.8215e-06 -1.4690
+0.1456
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<p><em>The predicted average price for an conventional avocado sold in an average total volume is $1.05. For an organic avocado, when an average total volume of avocados is sold, the average price is 0.43 cents less than for conventional. Controlling for avocado type, for every additional avocado sold, there is a 0.0000001 cent decrease in average price. For the interaction variables of type and total volume, the coefficient should be interpreted as the slope for total volume on average price is .000004 cents less for organic compared to conventional avocados. Howevere, none of these variables or interactions were significant. By the scatterplots, we can see that the assumptions of linearity is lost. The lack of significance of the BP test has us accept the null hypothesis of homoscedasticity. The lack of significance of the KS test tells us that the assumption of normality is met. None of the regions or regions interacting with total avocado volume changed significance status when robust standard errors were used. Our model explains 65.89% of the variation in the outcome.</em></p>
+<ul>
+<li><strong>4. (5 pts)</strong> Rerun same regression model (with interaction), but this time compute bootstrapped standard errors. Discuss any changes you observe in SEs and p-values using these SEs compared to the original SEs and the robust SEs)</li>
+</ul>
+<pre class="r"><code>samp_distn&lt;-replicate(5000, {
+boot_dat &lt;- sample_frac(avo1, replace=T) 
+fitter&lt;-lm(AveragePrice~type*total_c, data=boot_dat) 
+coef(fitter) })
+
+boot_dat &lt;- sample_frac(avo1, replace=T) 
+fitter&lt;-lm(AveragePrice~type*total_c, data=boot_dat)
+coeftest(fitter)</code></pre>
+<pre><code>##
+## t test of coefficients:
+##
+## Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) 1.0323e+00 3.1590e-02 32.6766 &lt; 2.2e-16 ***
+## typeorganic -1.0373e+00 4.3649e-01 -2.3765 0.0197516 *
+## total_c -1.2062e-07 6.4792e-08 -1.8617 0.0661476 .
+## typeorganic:total_c -7.1511e-06 1.9449e-06 -3.6768
+0.0004154 ***
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<p><em>The bootstrap standard error for is larger than the original SE, but smaller than the robust SE, but the p values for all the variables, including the interaction became even less significant than when using the robust and original SE (these were also insignificant). </em></p>
+<ul>
+<li><p><strong>5. (40 pts)</strong> Perform a logistic regression predicting a binary categorical variable (if you don’t have one, make/get one) from at least two explanatory variables (interaction not necessary).</p>
+<ul>
+<li>Interpret coefficient estimates in context (10)</li>
+<li>Report a confusion matrix for your logistic regression (2)</li>
+<li>Compute and discuss the Accuracy, Sensitivity (TPR), Specificity (TNR), and Recall (PPV) of your model (5)</li>
+<li>Using ggplot, plot density of log-odds (logit) by your binary outcome variable (3)</li>
+<li>Generate an ROC curve (plot) and calculate AUC (either manually or with a package); interpret (10)</li>
+<li>Perform 10-fold (or repeated random sub-sampling) CV and report average out-of-sample Accuracy, Sensitivity, and Recall (10)</li>
+</ul></li>
+</ul>
+<pre class="r"><code>avo1$price_c&lt;-avo1$AveragePrice-mean(avo1$AveragePrice)
+avo1$`4046_c`&lt;-avo1$X4046-mean(avo1$X4046)
+fit2&lt;-glm(type~price_c+`4046_c`, data = avo1, family = &quot;binomial&quot;)
+#interpret coefficients
+coeftest(fit2)</code></pre>
+<pre><code>##
+## z test of coefficients:
+##
+## Estimate Std. Error z value Pr(&gt;|z|)
+## (Intercept) -9.05633628 7.39886957 -1.2240 0.220946
+## price_c 8.16665532 2.53913707 3.2163 0.001298 **
+## `4046_c` -0.00014088 0.00010751 -1.3104 0.190063
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>exp(coef(fit2))</code></pre>
+<pre><code>##  (Intercept)      price_c     `4046_c` 
+## 1.166496e-04 3.521546e+03 9.998591e-01</code></pre>
+<pre class="r"><code>#confusion matrix
+avo1$prob&lt;-predict(fit2,type=&quot;response&quot;)
+pred&lt;-ifelse(avo1$prob&gt;.5,1,0)
+table(prediction=pred, truth=avo1$type)%&gt;%addmargins</code></pre>
+<pre><code>##           truth
+## prediction conventional organic Sum
+##        0             39       3  42
+##        1              5      41  46
+##        Sum           44      44  88</code></pre>
+<pre class="r"><code>class_diag &lt;- function(probs,truth){
+tab&lt;-table(factor(probs&gt;.5,levels=c(&quot;FALSE&quot;,&quot;TRUE&quot;)),truth)
+acc=sum(diag(tab))/sum(tab)
+sens=tab[2,2]/colSums(tab)[2]
+spec=tab[1,1]/colSums(tab)[1]
+ppv=tab[2,2]/rowSums(tab)[2]
+if(is.numeric(truth)==FALSE &amp; is.logical(truth)==FALSE) truth&lt;-as.numeric(truth)-1
+ord&lt;-order(probs, decreasing=TRUE)
+probs &lt;- probs[ord]; truth &lt;- truth[ord]
+TPR=cumsum(truth)/max(1,sum(truth))
+FPR=cumsum(!truth)/max(1,sum(!truth))
+dup&lt;-c(probs[-1]&gt;=probs[-length(probs)], FALSE)
+TPR&lt;-c(0,TPR[!dup],1); FPR&lt;-c(0,FPR[!dup],1)
+n &lt;- length(TPR)
+auc&lt;- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+data.frame(acc,sens,spec,ppv,auc)
+}
+
+class_diag(avo1$prob,avo1$type)</code></pre>
+<pre><code>##               acc      sens      spec       ppv       auc
+## organic 0.9090909 0.9318182 0.8863636 0.8913043 0.9783058</code></pre>
+<pre class="r"><code>#density plot of log odds
+avo1$logit&lt;-predict(fit2, type = &quot;link&quot;)
+avo1%&gt;%ggplot()+geom_density(aes(logit,color=type,fill=type), alpha=.4)+
+  theme(legend.position=c(.85,.85))+geom_vline(xintercept=0)+xlab(&quot;logit (log-odds)&quot;)+
+  geom_rug(aes(logit,color=type))+
+  geom_text(x=-5,y=.07,label=&quot;TN = 39&quot;)+
+  geom_text(x=-10,y=.008,label=&quot;FN = 3&quot;)+
+  geom_text(x=1,y=.006,label=&quot;FP = 5&quot;)+
+  geom_text(x=5,y=.04,label=&quot;TP = 41&quot;)</code></pre>
+<p><img src="/project2_files/figure-html/unnamed-chunk-6-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>#ROC Plot
+library(plotROC)
+ROCplot&lt;-ggplot(avo1)+geom_roc(aes(d=type,m=prob), n.cuts=0)
+ROCplot</code></pre>
+<p><img src="/project2_files/figure-html/unnamed-chunk-6-2.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>calc_auc(ROCplot)</code></pre>
+<pre><code>##   PANEL group       AUC
+## 1     1    -1 0.9783058</code></pre>
+<pre class="r"><code>#CV
+set.seed(1234)
+k=10 
+data&lt;-avo1[sample(nrow(avo1)),] 
+folds&lt;-cut(seq(1:nrow(avo1)),breaks=k,labels=F)
+diags&lt;-NULL
+for(i in 1:k){
+train&lt;-data[folds!=i,]
+test&lt;-data[folds==i,]
+truth&lt;-test$type
+fit&lt;-glm(type~price_c+`4046_c`,data=train,family=&quot;binomial&quot;)
+probs&lt;-predict(fit,newdata = test,type=&quot;response&quot;)
+diags&lt;-rbind(diags,class_diag(probs,truth))
+}
+summarize_all(diags,mean)</code></pre>
+<pre><code>##         acc      sens      spec  ppv       auc
+## 1 0.9097222 0.9583333 0.9014286 0.88 0.9861111</code></pre>
+<p><em>The odds of the avocados being organic for an average price and an average amount of PLU4046 avodacados sold is -9.06. Controlling for number of PLU4046 avocados sold, for every one additional dollar in average price, odds of organic increase by a factor of 8.17, significant. Controlling for price, for every additional PLU4046 avocado sold, odds of organic decrease by a factor of 0.0001, not significant. 39 conventional predicted avocados were actually conventional. 3 predicted conventional avocados were actually organic. 5 predicted organic avocados were actually conventional, and 41 predicted organic avocados were actually organic. The accuracy is 90.91%, the sensitivity is 93.18%, the specificity is 88.63%, and the precision is 89.13%. The AUC is 0.9783 which is great, meaning that price and the number of PLU4046 avocados sold are reliable predictors of avocado type. Using 10-fold CV, the average out of sample Accuracy is 90.83%, the sensitivity is 94.90%, and the ppv is 89.67%. The new AUC is 0.9764, only .0019 less than the sample AUC. This means out model is not overfit to the sample data and avocado price and number of PLU4046 avocados sold are still reliable predictors of avocado type. </em></p>
+<ul>
+<li><strong>6. (10 pts)</strong> Choose one variable you want to predict (can be one you used from before; either binary or continuous) and run a LASSO regression inputting all the rest of your variables as predictors. Choose lambda to give the simplest model whose accuracy is near that of the best (i.e., <code>lambda.1se</code>). Discuss which variables are retained. Perform 10-fold CV using this model: if response in binary, compare model’s out-of-sample accuracy to that of your logistic regression in part 5; if response is numeric, compare the residual standard error (at the bottom of the summary output, aka RMSE): lower is better fit!</li>
+</ul>
+<pre class="r"><code>library(glmnet)
+
+y&lt;-as.matrix(avo$type)
+x&lt;-model.matrix(type~.,data=avo)[,-1]
+x&lt;-scale(x)
+cv &lt;- cv.glmnet(x,y,family = &quot;binomial&quot;) 
+lasso&lt;-glmnet(x,y,family=&quot;binomial&quot;,lambda=cv$lambda.1se)
+coef(lasso)</code></pre>
+<pre><code>## 49 x 1 sparse Matrix of class &quot;dgCMatrix&quot;
+##                                    s0
+## (Intercept)                0.07284858
+## AveragePrice               1.82952665
+## Total.Volume               .         
+## X4046                      .         
+## X4225                     -0.04764429
+## X4770                      .         
+## regionAtlanta              .         
+## regionBaltimoreWashington  .         
+## regionBoise                .         
+## regionBoston               .         
+## regionBuffaloRochester     .         
+## regionCharlotte            .         
+## regionChicago              .         
+## regionCincinnatiDayton     .         
+## regionColumbus             .         
+## regionDallasFtWorth        .         
+## regionDenver               .         
+## regionDetroit              .         
+## regionGrandRapids          .         
+## regionGreatLakes           .         
+## regionHarrisburgScranton   .         
+## regionHartfordSpringfield  .         
+## regionHouston              .         
+## regionIndianapolis         .         
+## regionJacksonville         .         
+## regionLasVegas             .         
+## regionLosAngeles           .         
+## regionLouisville           .         
+## regionMiamiFtLauderdale    .         
+## regionNashville            .         
+## regionNewOrleansMobile     .         
+## regionNewYork              .         
+## regionOrlando              .         
+## regionPhiladelphia         .         
+## regionPhoenixTucson        .         
+## regionPittsburgh           .         
+## regionPlains               .         
+## regionPortland             .         
+## regionRaleighGreensboro    .         
+## regionRichmondNorfolk      .         
+## regionRoanoke              .         
+## regionSacramento           .         
+## regionSanDiego             .         
+## regionSanFrancisco         .         
+## regionSeattle              .         
+## regionSpokane              .         
+## regionStLouis              .         
+## regionSyracuse             .         
+## regionTampa                .</code></pre>
+<pre class="r"><code>#CV
+set.seed(1234)
+k=10 
+
+data1&lt;-avo[sample(nrow(avo)),] 
+folds&lt;-cut(seq(1:nrow(avo)),breaks=k,labels=F)
+diags&lt;-NULL
+for(i in 1:k){
+
+train&lt;-data1[folds!=i,]
+test&lt;-data1[folds==i,]
+truth&lt;-test$type
+fit&lt;-glm(type~AveragePrice,data=train,family=&quot;binomial&quot;)
+probs&lt;-predict(fit,newdata = test,type=&quot;response&quot;)
+diags&lt;-rbind(diags,class_diag(probs,truth))
+}
+diags%&gt;%summarize_all(mean)</code></pre>
+<pre><code>##         acc      sens      spec  ppv       auc
+## 1 0.9222222 0.9383333 0.9514286 0.93 0.9819444</code></pre>
+<p><em>The LASSO model showed us that Average Price is the only variable that is needed to accurately predict avocado type. When using this variable only, the accuracy is 90.83%, the sensitivity is 92.41%, the specificity is 90.74%, the precision is 90.5%. The AUC is 96.42%. The accuracy is the exact same as when using the model from 5, but the AUC has reduced slightly, meaning this model is slightly more fit to the sample data, despite it still being a great and reliable predictor of avocado type. </em>
+…</p>
+</div>
