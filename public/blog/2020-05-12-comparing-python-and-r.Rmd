@@ -9,9 +9,10 @@ tags:
   - Python
 description: ''
 ---
-
-
-
 ```{r}
+```
 
+
+```{python}
+3+2
 ```
