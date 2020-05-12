@@ -8,13 +8,12 @@ tags: []
 description: ''
 ---
 
-Before PERMANOVA was created and MANOVAs always violated assumptions:
+Before PERMANOVA existed and you had to run a MANOVA, univariate ANOVAs and multiple post hoc tests:
 
 ![](/blog/2020-05-12-first-blog-post_files/Barbaric.PNG)
 
 ```{r}
-library(vegan)
-library(tidyverse)
+library(vegan);library(tidyverse)
 
 dists<-iris%>%select(Sepal.Length,Petal.Width)%>%dist()
 
