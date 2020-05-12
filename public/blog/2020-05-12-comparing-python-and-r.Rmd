@@ -1,0 +1,11 @@
+---
+title: Comparing Python and R
+author: Juliette Licon
+date: '2020-05-12'
+slug: comparing-python-and-r
+categories: []
+tags:
+  - R Markdown
+  - Python
+description: ''
+---

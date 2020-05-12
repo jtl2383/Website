@@ -1,0 +1,22 @@
+---
+title: First Blog Post!
+author: Juliette Licon
+date: '2020-05-12'
+slug: first-blog-post
+categories: []
+tags: []
+description: ''
+---
+
+Before PERMANOVA was created and MANOVAs always violated assumptions:
+
+![](/blog/2020-05-12-first-blog-post_files/Barbaric.PNG)
+
+```{r}
+library(vegan)
+library(tidyverse)
+
+dists<-iris%>%select(Sepal.Length,Petal.Width)%>%dist()
+
+adonis(dists~Species,data=iris)
+```
