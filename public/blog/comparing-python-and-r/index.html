@@ -76,8 +76,18 @@
               
 
 
-<pre class="python"><code>3+2</code></pre>
-<pre><code>## 5</code></pre>
+<pre class="r"><code>library(reticulate);library(stringr)</code></pre>
+<pre class="python"><code>sentence = &quot;I&#39;m a Texas ex boiiiiiiiii!!!!&quot;
+sentence</code></pre>
+<pre><code>## &quot;I&#39;m a Texas ex boiiiiiiiii!!!!&quot;</code></pre>
+<p><img src="/blog/2020-05-12-comparing-python-and-r_files/Baker-and-Bevo-1.jpg" /></p>
+<pre class="python"><code>import re
+re.findall(r&quot;ex&quot;,sentence)</code></pre>
+<pre><code>## [&#39;ex&#39;, &#39;ex&#39;]</code></pre>
+<pre class="r"><code>r_sentence&lt;-py$sentence
+str_extract_all(r_sentence, pattern = &quot;ex&quot;,simplify = F)</code></pre>
+<pre><code>## [[1]]
+## [1] &quot;ex&quot; &quot;ex&quot;</code></pre>
 
               <hr>
               <div class="related-posts">

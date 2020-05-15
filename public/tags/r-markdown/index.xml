@@ -6,18 +6,20 @@
     <description>Recent content in R Markdown on Juliette Licon</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-US</language>
-    <lastBuildDate>Tue, 12 May 2020 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 14 May 2020 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/tags/r-markdown/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
-      <title>Comparing Python and R</title>
-      <link>/blog/comparing-python-and-r/</link>
-      <pubDate>Tue, 12 May 2020 00:00:00 +0000</pubDate>
+      <title>Communication between Python and R</title>
+      <link>/blog/communication-between-python-and-r/</link>
+      <pubDate>Thu, 14 May 2020 00:00:00 +0000</pubDate>
       
-      <guid>/blog/comparing-python-and-r/</guid>
-      <description> 3+2 ## 5 </description>
+      <guid>/blog/communication-between-python-and-r/</guid>
+      <description>Python and R languages can communicate with each other within RStudio. By using the package “reticulate”, Rstudio is now able to understand and call from code written in a python chunk in subsequent python AND R chunks.
+library(reticulate);library(stringr) In python, I have created the following sentence as a string. It is saved as a string in the local environment.
+sentence = &amp;quot;I&amp;#39;m a Texas Ex baby!!!!&amp;quot; sentence ## &amp;quot;I&amp;#39;m a Texas Ex baby!</description>
     </item>
     
   </channel>

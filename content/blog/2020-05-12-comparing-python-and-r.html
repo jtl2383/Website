@@ -1,8 +1,8 @@
 ---
-title: Comparing Python and R
+title: Communication between Python and R
 author: Juliette Licon
-date: '2020-05-12'
-slug: comparing-python-and-r
+date: '2020-05-14'
+slug: communication-between-python-and-r
 categories: []
 tags:
   - R Markdown
@@ -12,5 +12,27 @@ description: ''
 
 
 
-<pre class="python"><code>3+2</code></pre>
-<pre><code>## 5</code></pre>
+<p>Python and R languages can communicate with each other within RStudio. By using the package “reticulate”, Rstudio is now able to understand and call from code written in a python chunk in subsequent python AND R chunks.</p>
+<pre class="r"><code>library(reticulate);library(stringr)</code></pre>
+<p>In python, I have created the following sentence as a string. It is saved as a string in the local environment.</p>
+<pre class="python"><code>sentence = &quot;I&#39;m a Texas Ex baby!!!!&quot;
+sentence</code></pre>
+<pre><code>## &quot;I&#39;m a Texas Ex baby!!!!&quot;</code></pre>
+<p>Here is an accurate depiction of how I feel even though I am an adult going into the workforce.
+<img src="/blog/2020-05-12-comparing-python-and-r_files/Baker-and-Bevo-1.jpg" /></p>
+<p>The python “regular expression” or “re” package is imported into this R markdown file. Using the findall() function in the re package allows us to match a pattern within a string and extract these matches.</p>
+<p>The use of the brackets allows for variation in the pattern the code is looking for. By including both an uppercase and a lowercase “e” in the brackets, we are telling the program to return any instances of “ex” or any of “Ex”. Only one character within the brackets can be matched at a time. The matching patterns are the list in the output.</p>
+<pre class="python"><code>import re
+re.findall(r&quot;[eE]x&quot;,sentence)</code></pre>
+<pre><code>## [&#39;ex&#39;, &#39;Ex&#39;]</code></pre>
+<p>We now have an example of how the 2 languages can interact with one another. By using “py$” within an R chunk, we are telling R to pull the “sentence” string that was created with python, and save it as a new string in R. We can see that it extracts the exact same sentence.</p>
+<pre class="r"><code>r_sentence&lt;-py$sentence
+r_sentence</code></pre>
+<pre><code>## [1] &quot;I&#39;m a Texas Ex baby!!!!&quot;</code></pre>
+<p>Now that we have proven that items can be seamlessly transferred over from python to R, we can use functions from the stringr package to match and extract any patterns that match either “ex” or “Ex”. By setting simply to FALSE, we are asking for the matched patterns to be returned as a list of character vectors. We can see that the aesthetic of python’s list differs from R’s list.</p>
+<pre class="r"><code>str_extract_all(r_sentence, pattern = c(&quot;ex&quot;, &quot;Ex&quot;),simplify=F)</code></pre>
+<pre><code>## [[1]]
+## [1] &quot;ex&quot;
+## 
+## [[2]]
+## [1] &quot;Ex&quot;</code></pre>
